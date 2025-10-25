@@ -2,13 +2,40 @@ import argparse
 import os
 import requests
 import time
+import pyarrow.parquet as pq
 from multiprocessing import Pool
-from mychat.constant import index_to_filename, base_url, max_shard, data_dir
+from mychat.constant import index_to_filename, base_url, max_shard, DATA_DIR
+
+
+def list_parquet_files(data_dir=None):
+    if data_dir is None:
+        data_dir = DATA_DIR
+    parquet_files = sorted([f for f in os.listdir(data_dir) if f.endswith(".parquet")])
+    parquet_paths = [os.path.join(data_dir, f) for f in parquet_files]
+    return parquet_paths
+
+
+def parquets_iter_batched(split, start=0, step=1):
+    """
+    Iterate through the dataset, in batches of underlying row_groups for efficiency.
+    - split can be "train" or "val". the last parquet file will be val.
+    - start/step are useful for skipping rows in DDP. e.g. start=rank, step=world_size
+    """
+    assert split in ["train", "val"]
+    parquet_paths = list_parquet_files()
+    parquet_paths = parquet_paths[:-1] if split == "train" else parquet_paths[-1:]
+
+    for filepath in parquet_paths:
+        pf = pq.ParquetFile(filepath)
+        for rg_idx in range(start, pf.num_row_groups, step):
+            rg = pf.read_row_group(rg_idx)
+            text = rg.column("text").to_pylist()
+            yield text
 
 
 def download_single_file(index: int):
     filename = index_to_filename(index)
-    file_path = os.path.join(data_dir, filename)
+    file_path = os.path.join(DATA_DIR, filename)
     if os.path.exists(file_path):
         print(f"{file_path} already exists, skipping download.")
         return
@@ -70,7 +97,7 @@ if __name__ == "__main__":
     print(
         f"Downloading of {len(ids_to_download)} files using {args.num_workers} workers."
     )
-    print(f"target directory: {data_dir}")
+    print(f"target directory: {DATA_DIR}")
     with Pool(processes=args.num_workers) as pool:
         results = pool.map(download_single_file, ids_to_download)
 

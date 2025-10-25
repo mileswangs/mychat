@@ -5,3 +5,5 @@ rustbpe/target/
 dev-ignore/
 report.md
 base_data/
+eval_bundle/
+identity_conversations.jsonl
