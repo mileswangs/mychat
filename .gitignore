@@ -4,4 +4,4 @@ __pycache__/
 rustbpe/target/
 dev-ignore/
 report.md
-data/
+base_data/
