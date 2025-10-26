@@ -1,4 +1,4 @@
 # Train data
-from mychat.constant import identity_conversations_filepath
+from mychat.common import identity_conversations_filepath
 
 train_ds = []

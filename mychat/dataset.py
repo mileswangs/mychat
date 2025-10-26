@@ -4,7 +4,18 @@ import requests
 import time
 import pyarrow.parquet as pq
 from multiprocessing import Pool
-from mychat.constant import index_to_filename, base_url, max_shard, DATA_DIR
+
+from mychat.common import BASE_DIR
+
+DATA_DIR = os.path.join(BASE_DIR, "base_data")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+base_url = "https://huggingface.co/datasets/karpathy/fineweb-edu-100b-shuffle/resolve/main"
+max_shard = 1822
+
+index_to_filename = lambda index: f"shard_{index:05d}.parquet"
+
+identity_conversations_filepath = os.path.join(BASE_DIR, "identity_conversations.jsonl")
 
 
 def list_parquet_files(data_dir=None):
@@ -73,9 +84,7 @@ def download_single_file(index: int):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Download FineWeb-Edu 100BT dataset shards"
-    )
+    parser = argparse.ArgumentParser(description="Download FineWeb-Edu 100BT dataset shards")
     parser.add_argument(
         "-n",
         "--num-files",
@@ -94,14 +103,10 @@ if __name__ == "__main__":
 
     num = max_shard + 1 if args.num_files == -1 else min(args.num_files, max_shard + 1)
     ids_to_download = list(range(num))
-    print(
-        f"Downloading of {len(ids_to_download)} files using {args.num_workers} workers."
-    )
+    print(f"Downloading of {len(ids_to_download)} files using {args.num_workers} workers.")
     print(f"target directory: {DATA_DIR}")
     with Pool(processes=args.num_workers) as pool:
         results = pool.map(download_single_file, ids_to_download)
 
     successful_downloads = sum(1 for result in results if result)
-    print(
-        f"Downloaded {successful_downloads}/{len(ids_to_download)} files successfully."
-    )
+    print(f"Downloaded {successful_downloads}/{len(ids_to_download)} files successfully.")
