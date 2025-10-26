@@ -239,6 +239,9 @@ class RustBPETokenizer:
             raise ValueError(f"Unsupported input type: {type(text)}")
         return ids
 
+    def decode(self, token_ids):
+        return self.enc.decode(token_ids)
+
     def __call__(self, *args, **kwds):
         return self.encode(*args, **kwds)
 
