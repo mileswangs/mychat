@@ -1,10 +1,10 @@
 ## Tokenizer training
-timestamp: 2025-10-26 16:42:31
+timestamp: 2025-10-26 16:48:16
 
 - max_chars: 10,000,000,000
 - doc_cap: 10,000
 - vocab_size: 65,536
-- train_time: 6.5292
+- train_time: 6.0900
 - num_special_tokens: 9
 - token_bytes_min: 1
 - token_bytes_max: 32
