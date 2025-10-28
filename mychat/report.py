@@ -77,7 +77,7 @@ def get_system_info():
 
     # User and environment
     info["user"] = os.environ.get("USER", "unknown")
-    info["nanochat_base_dir"] = os.environ.get("NANOCHAT_BASE_DIR", "out")
+    info["nanochat_get_base_dir()"] = os.environ.get("NANOCHAT_get_base_dir()", "out")
     info["working_dir"] = os.getcwd()
 
     return info
@@ -404,11 +404,11 @@ class DummyReport:
 
 def get_report():
     # just for convenience, only rank 0 logs to report
-    from .common import BASE_DIR, get_dist_info
+    from .common import get_base_dir(), get_dist_info
 
     ddp, ddp_rank, ddp_local_rank, ddp_world_size = get_dist_info()
     if ddp_rank == 0:
-        report_dir = os.path.join(BASE_DIR, "report")
+        report_dir = os.path.join(get_base_dir(), "report")
         return Report(report_dir)
     else:
         return DummyReport()

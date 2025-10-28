@@ -10,7 +10,7 @@ import argparse
 import torch
 
 from mychat.tokenizer import RustBPETokenizer
-from mychat.common import BASE_DIR
+from mychat.common import get_base_dir()
 from mychat.dataset import parquets_iter_batched
 
 # -----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ train_time = t1 - t0
 print(f"Tokenizer trained in {train_time:.2f} seconds.")
 
 # save the tokenizer to disk
-tokenizer_dir = os.path.join(BASE_DIR, "tokenizer")
+tokenizer_dir = os.path.join(get_base_dir(), "tokenizer")
 tokenizer.save(tokenizer_dir)
 
 

@@ -5,9 +5,9 @@ import time
 import pyarrow.parquet as pq
 from multiprocessing import Pool
 
-from mychat.common import BASE_DIR
+from mychat.common import get_base_dir()
 
-DATA_DIR = os.path.join(BASE_DIR, "base_data")
+DATA_DIR = os.path.join(get_base_dir(), "base_data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 base_url = "https://huggingface.co/datasets/karpathy/fineweb-edu-100b-shuffle/resolve/main"
@@ -15,7 +15,7 @@ max_shard = 1822
 
 index_to_filename = lambda index: f"shard_{index:05d}.parquet"
 
-identity_conversations_filepath = os.path.join(BASE_DIR, "identity_conversations.jsonl")
+identity_conversations_filepath = os.path.join(get_base_dir(), "identity_conversations.jsonl")
 
 
 def list_parquet_files(data_dir=None):

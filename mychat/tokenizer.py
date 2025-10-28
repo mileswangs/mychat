@@ -370,17 +370,17 @@ class RustBPETokenizer:
 
 
 def get_tokenizer():
-    from mychat.common import BASE_DIR
+    from mychat.common import get_base_dir()
 
-    tokenizer_dir = os.path.join(BASE_DIR, "tokenizer")
+    tokenizer_dir = os.path.join(get_base_dir(), "tokenizer")
     return RustBPETokenizer.from_directory(tokenizer_dir)
 
 
 def get_token_bytes(device: str = "cpu"):
     import torch
-    from mychat.common import BASE_DIR
+    from mychat.common import get_base_dir()
 
-    tokenizer_dir = os.path.join(BASE_DIR, "tokenizer")
+    tokenizer_dir = os.path.join(get_base_dir(), "tokenizer")
     token_bytes_path = os.path.join(tokenizer_dir, "token_bytes.pt")
     assert os.path.exists(
         token_bytes_path
