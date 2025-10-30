@@ -9,6 +9,8 @@ Two implementations are available:
 import os
 import copy
 from functools import lru_cache
+from mychat.common import get_base_dir
+import torch
 
 SPECIAL_TOKENS = [
     # Beginning of sentence
@@ -370,15 +372,12 @@ class RustBPETokenizer:
 
 
 def get_tokenizer():
-    from mychat.common import get_base_dir()
 
     tokenizer_dir = os.path.join(get_base_dir(), "tokenizer")
     return RustBPETokenizer.from_directory(tokenizer_dir)
 
 
 def get_token_bytes(device: str = "cpu"):
-    import torch
-    from mychat.common import get_base_dir()
 
     tokenizer_dir = os.path.join(get_base_dir(), "tokenizer")
     token_bytes_path = os.path.join(tokenizer_dir, "token_bytes.pt")

@@ -10,7 +10,7 @@ import argparse
 import torch
 
 from mychat.tokenizer import RustBPETokenizer
-from mychat.common import get_base_dir()
+from mychat.common import get_base_dir
 from mychat.dataset import parquets_iter_batched
 
 # -----------------------------------------------------------------------------
