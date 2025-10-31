@@ -7,7 +7,7 @@ import logging
 import re
 
 
-def get_get_base_dir():
+def get_base_dir():
     home_dir = os.path.expanduser("~")
     cache_dir = os.path.join(home_dir, ".cache")
     mychat_dir = os.path.join(cache_dir, "mychat")

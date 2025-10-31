@@ -14,6 +14,7 @@ python -m scripts.base_train --depth=4 --max_seq_len=512 --device_batch_size=1 -
 import os
 
 from mychat.checkpoint_manager import save_checkpoint
+from mychat.engine import Engine
 from mychat.gpt import GPT, GPTConfig
 from mychat.loss_eval import evaluate_bpb
 from mychat.tokenizer import get_token_bytes, get_tokenizer
