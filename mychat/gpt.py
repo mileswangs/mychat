@@ -90,9 +90,7 @@ class CausalSelfAttention(nn.Module):
         Tk = k.size(2)  # number of keys/values in total (in the cache + current forward pass)
 
         # Attention: queries attend to keys/values autoregressively. A few cases to handle:
-        enable_gqa = (
-            self.n_head != self.n_kv_head
-        )  # Group Query Attention (GQA): duplicate key/value heads to match query heads if desired
+        enable_gqa = self.n_head != self.n_kv_head  # Group Query Attention (GQA): duplicate key/value heads to match query heads if desired
         if kv_cache is None or Tq == Tk:
             # During training (no KV cache), attend as usual with causal attention
             # And even if there is KV cache, we can still use this simple version when Tq == Tk
@@ -104,16 +102,12 @@ class CausalSelfAttention(nn.Module):
         else:
             # During inference AND we have a chunk of queries in this forward pass:
             # First, each query attends to all the cached keys/values (i.e. full prefix)
-            attn_mask = torch.zeros(
-                (Tq, Tk), dtype=torch.bool, device=q.device
-            )  # True = keep, False = mask
+            attn_mask = torch.zeros((Tq, Tk), dtype=torch.bool, device=q.device)  # True = keep, False = mask
             prefix_len = Tk - Tq
             if prefix_len > 0:  # can't be negative but could be zero
                 attn_mask[:, :prefix_len] = True
             # Then, causal attention within this chunk
-            attn_mask[:, prefix_len:] = torch.tril(
-                torch.ones((Tq, Tq), dtype=torch.bool, device=q.device)
-            )
+            attn_mask[:, prefix_len:] = torch.tril(torch.ones((Tq, Tq), dtype=torch.bool, device=q.device))
             y = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask, enable_gqa=enable_gqa)
 
         # Re-assemble the heads side by side and project back to residual stream
@@ -154,9 +148,7 @@ class GPT(nn.Module):
         self.transformer = nn.ModuleDict(
             {
                 "wte": nn.Embedding(config.vocab_size, config.n_embd),
-                "h": nn.ModuleList(
-                    [Block(config, layer_idx) for layer_idx in range(config.n_layer)]
-                ),
+                "h": nn.ModuleList([Block(config, layer_idx) for layer_idx in range(config.n_layer)]),
             }
         )
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
@@ -164,14 +156,10 @@ class GPT(nn.Module):
         # As for rotary_seq_len, these rotary embeddings are pretty small/cheap in memory,
         # so let's just over-compute them, but assert fail if we ever reach that amount.
         # In the future we can dynamically grow the cache, for now it's fine.
-        self.rotary_seq_len = (
-            config.sequence_len * 10
-        )  # 10X over-compute should be enough, TODO make nicer?
+        self.rotary_seq_len = config.sequence_len * 10  # 10X over-compute should be enough, TODO make nicer?
         head_dim = config.n_embd // config.n_head
         cos, sin = self._precompute_rotary_embeddings(self.rotary_seq_len, head_dim)
-        self.register_buffer(
-            "cos", cos, persistent=False
-        )  # persistent=False means it's not saved to the checkpoint
+        self.register_buffer("cos", cos, persistent=False)  # persistent=False means it's not saved to the checkpoint
         self.register_buffer("sin", sin, persistent=False)
 
     def init_weights(self):
@@ -218,24 +206,18 @@ class GPT(nn.Module):
         num_flops_per_token = 6 * (nparams - nparams_embedding) + 12 * l * h * q * t
         return num_flops_per_token
 
-    def setup_optimizers(
-        self, unembedding_lr=0.004, embedding_lr=0.2, matrix_lr=0.02, weight_decay=0.0
-    ):
+    def setup_optimizers(self, unembedding_lr=0.004, embedding_lr=0.2, matrix_lr=0.02, weight_decay=0.0):
         model_dim = self.config.n_embd
         ddp, rank, local_rank, world_size = get_dist_info()
         matrix_params = list(self.transformer.h.parameters())
         embedding_params = list(self.transformer.wte.parameters())
         lm_head_params = list(self.lm_head.parameters())
-        assert len(list(self.parameters())) == len(matrix_params) + len(embedding_params) + len(
-            lm_head_params
-        )
+        assert len(list(self.parameters())) == len(matrix_params) + len(embedding_params) + len(lm_head_params)
         # Create the AdamW optimizer for the embedding and lm_head
         # Scale the LR for the AdamW parameters by ∝1/√dmodel (having tuned the LRs for 768 dim model)
         dmodel_lr_scale = (model_dim / 768) ** -0.5
         if rank == 0:
-            print(
-                f"Scaling the LR for the AdamW parameters ∝1/√({model_dim}/768) = {dmodel_lr_scale:.6f}"
-            )
+            print(f"Scaling the LR for the AdamW parameters ∝1/√({model_dim}/768) = {dmodel_lr_scale:.6f}")
         adam_groups = [
             dict(params=lm_head_params, lr=unembedding_lr * dmodel_lr_scale),
             dict(params=embedding_params, lr=embedding_lr * dmodel_lr_scale),
@@ -257,12 +239,8 @@ class GPT(nn.Module):
     def forward(self, idx, target=None, kv_cache=None, loss_reduction="mean"):
         B, T = idx.size()
         # Grab the rotary embeddings for the current sequence length (they are of shape (1, seq_len, 1, head_dim))
-        assert T <= self.cos.size(
-            1
-        ), f"Sequence length grew beyond the rotary embeddings cache: {T} > {self.cos.size(1)}"
-        assert (
-            idx.device == self.cos.device
-        ), f"Rotary embeddings and idx are on different devices: {idx.device} != {self.cos.device}"
+        assert T <= self.cos.size(1), f"Sequence length grew beyond the rotary embeddings cache: {T} > {self.cos.size(1)}"
+        assert idx.device == self.cos.device, f"Rotary embeddings and idx are on different devices: {idx.device} != {self.cos.device}"
         assert self.cos.dtype == torch.bfloat16, "Rotary embeddings must be in bfloat16"
         # if kv cache exists, we need to offset the rotary embeddings to the current position in the cache
         T0 = 0 if kv_cache is None else kv_cache.get_pos()
@@ -289,7 +267,7 @@ class GPT(nn.Module):
             loss = F.cross_entropy(
                 logits.view(-1, logits.size(-1)),
                 target.view(-1),
-                ignore_index=-1,
+                ignore_index=-1,  # for sft masked tokens
                 reduction=loss_reduction,
             )
             return loss

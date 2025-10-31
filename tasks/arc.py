@@ -7,7 +7,7 @@ from datasets import load_dataset
 from tasks.common import Task, render_mc
 
 
-class Arc(Task):
+class ARC(Task):
     def __init__(self, subset, split, **kwargs):
         super().__init__(**kwargs)
         assert subset in ["ARC-Easy", "ARC-Challenge"]
@@ -27,9 +27,7 @@ class Arc(Task):
         choices = row["choices"]["text"]
         anwer_string = row["answerKey"]
         letters = row["choices"]["label"]
-        assert (
-            anwer_string in letters
-        ), f"Answer {anwer_string} not in choices {letters}"
+        assert anwer_string in letters, f"Answer {anwer_string} not in choices {letters}"
         # create and return conversation
         user_message = render_mc(question, letters, choices)
         messages = [
@@ -41,8 +39,6 @@ class Arc(Task):
 
     def evaluate(self, conversation, assistant_response):
         # Compare the completion with the correct answer
-        assert (
-            assistant_response in conversation["letters"]
-        ), f'Arc answer "{assistant_response}" not in choices {conversation["letters"]}'
+        assert assistant_response in conversation["letters"], f'Arc answer "{assistant_response}" not in choices {conversation["letters"]}'
         assistant_message = conversation["messages"][-1]["content"]
         return assistant_message == assistant_response
