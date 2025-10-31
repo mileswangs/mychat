@@ -18,6 +18,7 @@ from mychat.gpt import GPT, GPTConfig
 from mychat.loss_eval import evaluate_bpb
 from mychat.tokenizer import get_token_bytes, get_tokenizer
 from mychat.dataloader import tokenizing_distributed_data_loader
+from script.base_eval import evaluate_model
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import time
