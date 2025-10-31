@@ -19,7 +19,14 @@ import torch
 import wandb
 import torch.distributed as dist
 
-from mychat.common import DummyWandb, autodetect_device_type, compute_init, print0, get_base_dir
+from mychat.common import (
+    DummyWandb,
+    autodetect_device_type,
+    compute_cleanup,
+    compute_init,
+    print0,
+    get_base_dir,
+)
 from mychat.checkpoint_manager import load_model, save_checkpoint
 from mychat.gpt import GPT
 from mychat.loss_eval import evaluate_bpb
@@ -362,7 +369,7 @@ print0(f"Minimum validation bpb: {min_val_bpb:.4f}")
 
 # Log to report
 if not dry_run:
-    from nanochat.report import get_report
+    from mychat.report import get_report
 
     get_report().log(
         section="Midtraining",
