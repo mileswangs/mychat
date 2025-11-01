@@ -5,7 +5,7 @@ import time
 import pyarrow.parquet as pq
 from multiprocessing import Pool
 
-from mychat.common import get_base_dir()
+from mychat.common import get_base_dir
 
 DATA_DIR = os.path.join(get_base_dir(), "base_data")
 os.makedirs(DATA_DIR, exist_ok=True)

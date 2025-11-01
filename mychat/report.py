@@ -162,9 +162,7 @@ Generated: {timestamp}
 """
 
     # bloat metrics: package all of the source code and assess its weight
-    packaged = run_command(
-        'files-to-prompt . -e py -e md -e rs -e html -e toml -e sh --ignore "*target*" --cxml'
-    )
+    packaged = run_command('files-to-prompt . -e py -e md -e rs -e html -e toml -e sh --ignore "*target*" --cxml')
     num_chars = len(packaged)
     num_lines = len(packaged.split("\n"))
     num_files = len([x for x in packaged.split("\n") if x.startswith("<source>")])
@@ -295,9 +293,7 @@ class Report:
             else:
                 start_time = None  # will cause us to not write the total wall clock time
                 bloat_data = "[bloat data missing]"
-                print(
-                    f"Warning: {header_file} does not exist. Did you forget to run `nanochat reset`?"
-                )
+                print(f"Warning: {header_file} does not exist. Did you forget to run `nanochat reset`?")
             # process all the individual sections
             for file_name in EXPECTED_FILES:
                 section_file = os.path.join(report_dir, file_name)
@@ -404,7 +400,7 @@ class DummyReport:
 
 def get_report():
     # just for convenience, only rank 0 logs to report
-    from .common import get_base_dir(), get_dist_info
+    from .common import get_base_dir, get_dist_info
 
     ddp, ddp_rank, ddp_local_rank, ddp_world_size = get_dist_info()
     if ddp_rank == 0:
