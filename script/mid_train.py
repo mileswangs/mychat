@@ -55,17 +55,9 @@ matrix_lr = 0.02  # learning rate for the matrix parameters (Muon)
 init_lr_frac = 1.0  # initial learning rate is this fraction of the base learning rate
 eval_every = 150  # -1 = disable
 eval_tokens = 20 * 524288
-dry_run = (
-    0  # dry_run=1 is for experiments: we will log to wandb but we won't write checkpoints or report
-)
-config_keys = [
-    k
-    for k, v in globals().items()
-    if not k.startswith("_") and isinstance(v, (int, float, bool, str))
-]
-exec(
-    open(os.path.join("nanochat", "configurator.py")).read()
-)  # overrides from command line or config file
+dry_run = 0  # dry_run=1 is for experiments: we will log to wandb but we won't write checkpoints or report
+config_keys = [k for k, v in globals().items() if not k.startswith("_") and isinstance(v, (int, float, bool, str))]
+exec(open(os.path.join("mychat", "configurator.py")).read())  # overrides from command line or config file
 user_config = {k: globals()[k] for k in config_keys}  # possibly useful for logging
 # ------------------------------------------------------------
 
@@ -73,30 +65,20 @@ user_config = {k: globals()[k] for k in config_keys}  # possibly useful for logg
 device_type = autodetect_device_type() if device_type == "" else device_type
 ddp, ddp_rank, ddp_local_rank, ddp_world_size, device = compute_init(device_type)
 master_process = ddp_rank == 0
-autocast_ctx = (
-    torch.amp.autocast(device_type=device_type, dtype=torch.bfloat16)
-    if device_type == "cuda"
-    else nullcontext()
-)
+autocast_ctx = torch.amp.autocast(device_type=device_type, dtype=torch.bfloat16) if device_type == "cuda" else nullcontext()
 synchronize = torch.cuda.synchronize if device_type == "cuda" else lambda: None
 get_max_memory = torch.cuda.max_memory_allocated if device_type == "cuda" else lambda: 0
 
 # wandb logging init
 use_dummy_wandb = run == "dummy" or not master_process
-wandb_run = (
-    DummyWandb()
-    if use_dummy_wandb
-    else wandb.init(project="nanochat-mid", name=run, config=user_config)
-)
+wandb_run = DummyWandb() if use_dummy_wandb else wandb.init(project="mychat-mid", name=run, config=user_config)
 
 # Load model and tokenizer
 
 model, tokenizer, meta = load_model("base", device, phase="train", model_tag=model_tag, step=step)
 pretrain_batch_size = meta.get("device_batch_size", None)
 if pretrain_batch_size is not None and device_batch_size > pretrain_batch_size:
-    print0(
-        f"FOOTGUN WARNING: base model training used device_batch_size {pretrain_batch_size}, did you pass in a good --device_batch_size to this script?"
-    )
+    print0(f"FOOTGUN WARNING: base model training used device_batch_size {pretrain_batch_size}, did you pass in a good --device_batch_size to this script?")
 
 orig_model = model
 model: GPT = torch.compile(model, dynamic=False)
@@ -131,27 +113,17 @@ identity_conversations_filepath = os.path.join(base_dir, "identity_conversations
 train_dataset = TaskMixture(
     [
         SmolTalk(split="train"),  # 460K rows of general conversations
-        MMLU(
-            subset="auxiliary_train", split="train"
-        ),  # 100K rows of multiple choice problems drawn from ARC, MC_TEST, OBQA, RACE
-        GSM8K(
-            subset="main", split="train"
-        ),  # 8K rows teaching simple math and (calculator) tool use
-        CustomJSON(
-            filepath=identity_conversations_filepath
-        ),  # 1000 rows of synthetic identity conversations
+        MMLU(subset="auxiliary_train", split="train"),  # 100K rows of multiple choice problems drawn from ARC, MC_TEST, OBQA, RACE
+        GSM8K(subset="main", split="train"),  # 8K rows teaching simple math and (calculator) tool use
+        CustomJSON(filepath=identity_conversations_filepath),  # 1000 rows of synthetic identity conversations
         CustomJSON(filepath=identity_conversations_filepath),  # let's do 2 epochs of these
     ]
 )
 val_dataset = TaskMixture(
     [
         SmolTalk(split="test"),  # 24K rows in test set
-        MMLU(
-            subset="all", split="test", stop=5200
-        ),  # 14K rows in test set, use only 5.2K to match the train ratios
-        GSM8K(
-            subset="main", split="test", stop=420
-        ),  # 1.32K rows in test set, use only 420 to match the train ratios
+        MMLU(subset="all", split="test", stop=5200),  # 14K rows in test set, use only 5.2K to match the train ratios
+        GSM8K(subset="main", split="test", stop=420),  # 1.32K rows in test set, use only 420 to match the train ratios
     ]
 )  # total: 24K + 14K + 1.32K ~= 39K rows
 
@@ -168,15 +140,11 @@ def mid_data_generator(split):
     dataset = train_dataset if split == "train" else val_dataset
     datasize = len(dataset)
     assert datasize > 0, "Dataset is empty"
-    needed_tokens = (
-        device_batch_size * max_seq_len + 1
-    )  # to form one training batch of inputs,targets
+    needed_tokens = device_batch_size * max_seq_len + 1  # to form one training batch of inputs,targets
     token_buffer = deque()
     # CUDA supports memory pinning for faster transfers between CPU and GPU:
     scratch = torch.empty(needed_tokens, dtype=torch.int64, pin_memory=(device_type == "cuda"))
-    cursor = (
-        ddp_rank  # increments by ddp_world_size each time, so each rank processes unique documents
-    )
+    cursor = ddp_rank  # increments by ddp_world_size each time, so each rank processes unique documents
     it = 0  # iteration counter
     while True:
         # Accumulate enough tokens for one iteration before yielding
@@ -197,12 +165,8 @@ def mid_data_generator(split):
             scratch[i] = token_buffer.popleft()
         inputs_cpu = scratch[:-1].to(dtype=torch.int32)
         targets_cpu = scratch[1:]
-        inputs = inputs_cpu.view(device_batch_size, max_seq_len).to(
-            device=device, dtype=torch.int32, non_blocking=True
-        )
-        targets = targets_cpu.view(device_batch_size, max_seq_len).to(
-            device=device, dtype=torch.int32, non_blocking=True
-        )
+        inputs = inputs_cpu.view(device_batch_size, max_seq_len).to(device=device, dtype=torch.int32, non_blocking=True)
+        targets = targets_cpu.view(device_batch_size, max_seq_len).to(device=device, dtype=torch.int32, non_blocking=True)
         if split == "train":
             if num_iterations > 0:
                 approx_progress = it / num_iterations
@@ -275,9 +239,7 @@ while True:
             checkpoint_dir,
             step,
             orig_model.state_dict(),
-            [
-                opt.state_dict() for opt in optimizers
-            ],  # TODO: make sure saving across ranks is done correctly
+            [opt.state_dict() for opt in optimizers],  # TODO: make sure saving across ranks is done correctly
             {
                 "step": step,
                 "val_bpb": val_bpb,  # loss at last step
@@ -307,9 +269,7 @@ while True:
         train_loss = loss.detach()  # for logging
         loss = loss / grad_accum_steps  # each .backward() is a grad sum => normalize loss here
         loss.backward()
-        x, y = next(
-            train_loader
-        )  # prefetch the next batch while the GPU is busy with forward/backward
+        x, y = next(train_loader)  # prefetch the next batch while the GPU is busy with forward/backward
         progress = max(progress, approx_progress)  # only increase progress monotonically
     # step the optimizers
     lrm = get_lr_multiplier(progress)
@@ -331,22 +291,16 @@ while True:
     step += 1
 
     # logging
-    smooth_train_loss = (
-        ema_beta * smooth_train_loss + (1 - ema_beta) * train_loss.item()
-    )  # EMA the training loss
+    smooth_train_loss = ema_beta * smooth_train_loss + (1 - ema_beta) * train_loss.item()  # EMA the training loss
     debiased_smooth_loss = smooth_train_loss / (1 - ema_beta ** (step + 1))  # debias the EMA
     pct_done = 100 * progress
     tok_per_sec = int(world_tokens_per_fwdbwd / dt)
     flops_per_sec = num_flops_per_token * total_batch_size / dt
-    promised_flops_per_sec_h100 = (
-        989e12 * ddp_world_size
-    )  # bfloat16 H100 SXM and without 2:4 sparsity
+    promised_flops_per_sec_h100 = 989e12 * ddp_world_size  # bfloat16 H100 SXM and without 2:4 sparsity
     mfu = 100 * flops_per_sec / promised_flops_per_sec_h100  # in %
     if step > 10:
         total_training_time += dt  # only count the time after the first 10 steps
-    print0(
-        f"step {step:05d} ({pct_done:.2f}%) | loss: {debiased_smooth_loss:.6f} | lrm: {lrm:.2f} | dt: {dt * 1000:.2f}ms | tok/sec: {tok_per_sec:,} | mfu: {mfu:.2f} | total time: {total_training_time/60:.2f}m"
-    )
+    print0(f"step {step:05d} ({pct_done:.2f}%) | loss: {debiased_smooth_loss:.6f} | lrm: {lrm:.2f} | dt: {dt * 1000:.2f}ms | tok/sec: {tok_per_sec:,} | mfu: {mfu:.2f} | total time: {total_training_time/60:.2f}m")
     if step % 10 == 0:
         wandb_run.log(
             {

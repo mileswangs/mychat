@@ -23,22 +23,14 @@ split_tokens = 20 * 524288  # number of tokens to evaluate per split
 model_tag = None  # optional model tag for the output directory name
 model_step = None  # optional model step for the output directory name
 device_type = ""  # cuda|cpu|mps (empty => autodetect)
-exec(
-    open(os.path.join("nanochat", "configurator.py")).read()
-)  # overrides from command line or config file
+exec(open(os.path.join("mychat", "configurator.py")).read())  # overrides from command line or config file
 
 # Load the base model and the tokenizer
 device_type = autodetect_device_type() if device_type == "" else device_type
 ddp, ddp_rank, ddp_local_rank, ddp_world_size, device = compute_init(device_type)
-model, tokenizer, meta = load_model(
-    "base", device, phase="eval", model_tag=model_tag, step=model_step
-)
+model, tokenizer, meta = load_model("base", device, phase="eval", model_tag=model_tag, step=model_step)
 sequence_len = meta["model_config"]["sequence_len"]  # could be arbitrary really
-autocast_ctx = (
-    torch.amp.autocast(device_type=device_type, dtype=torch.bfloat16)
-    if device_type == "cuda"
-    else nullcontext()
-)
+autocast_ctx = torch.amp.autocast(device_type=device_type, dtype=torch.bfloat16) if device_type == "cuda" else nullcontext()
 
 # Evaluate the loss on each split
 tokens_per_step = device_batch_size * sequence_len * ddp_world_size
@@ -47,9 +39,7 @@ steps = split_tokens // tokens_per_step
 token_bytes = get_token_bytes(device=device)
 bpb_results = {}
 for split_name in ["train", "val"]:
-    loader = tokenizing_distributed_data_loader(
-        device_batch_size, sequence_len, split_name, device=device
-    )
+    loader = tokenizing_distributed_data_loader(device_batch_size, sequence_len, split_name, device=device)
     with autocast_ctx:
         bpb = evaluate_bpb(model, loader, steps, token_bytes)
     print0(f"{split_name} bpb: {bpb:.4f}")

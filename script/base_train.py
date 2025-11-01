@@ -46,9 +46,7 @@ max_seq_len = 128  # max context length
 # Training horizon. Only one of these 3 will be used, in this order of precedence.
 num_iterations = -1  # (-1 = disable)
 target_flops = -1  # use target flops to calculate iterations  (-1 = disable)
-target_param_data_ratio = (
-    20  # calculate num iterations to maintain fix data:param ratio(Chinchilla= 20)
-)
+target_param_data_ratio = 20  # calculate num iterations to maintain fix data:param ratio(Chinchilla= 20)
 # Optimization
 device_batch_size = 32
 total_batch_size = 524288
@@ -66,14 +64,8 @@ sample_every = 2000  # every how many steps to sample from the model
 # Output
 model_tag = ""  # optionally override the model tag for the output checkpoint directory name
 # now allow CLI to override the settings via the configurator lol
-config_keys = [
-    k
-    for k, v in globals().items()
-    if not k.startswith("_") and isinstance(v, (int, float, bool, str))
-]
-exec(
-    open(os.path.join("mychat", "configurator.py")).read()
-)  # overrides from command line or config file
+config_keys = [k for k, v in globals().items() if not k.startswith("_") and isinstance(v, (int, float, bool, str))]
+exec(open(os.path.join("mychat", "configurator.py")).read())  # overrides from command line or config file
 user_config = {k: globals()[k] for k in config_keys}  # will be useful for logging
 # -----------------------------------------------------------------------------
 
@@ -81,22 +73,14 @@ user_config = {k: globals()[k] for k in config_keys}  # will be useful for loggi
 device_type = autodetect_device_type() if device_type == "" else device_type
 ddp, ddp_rank, ddp_local_rank, ddp_world_size, device = compute_init(device_type)
 master_process = ddp_rank == 0  # this process doing logging, checkpointing, etc
-autocast_ctx = (
-    torch.amp.autocast(device_type=device_type, dtype=torch.bfloat16)
-    if device_type == "cuda"
-    else nullcontext()
-)
+autocast_ctx = torch.amp.autocast(device_type=device_type, dtype=torch.bfloat16) if device_type == "cuda" else nullcontext()
 synchronize = torch.cuda.synchronize if device_type == "cuda" else lambda: None
 get_max_memory = torch.cuda.max_memory_allocated if device_type == "cuda" else lambda: 0
 
 
 # wandb logging init
 use_dummy_wandb = run == "dummy" or not master_process
-wandb_run = (
-    DummyWandb()
-    if use_dummy_wandb
-    else wandb.init(project="nanochat", name=run, config=user_config)
-)
+wandb_run = DummyWandb() if use_dummy_wandb else wandb.init(project="mychat", name=run, config=user_config)
 
 # Tokenizer will be useful for evaluation, also we need vocab size
 tokenizer = get_tokenizer()
@@ -107,9 +91,7 @@ print0(f"Vocab size: {vocab_size}")
 
 # Model kwargs are derived from the desired path of the model
 num_layers = depth
-model_dim = (
-    depth * 64
-)  # aspect ratio 64 (usually this is varied from 64 -> 128 as model size increases)
+model_dim = depth * 64  # aspect ratio 64 (usually this is varied from 64 -> 128 as model size increases)
 num_heads = max(1, (model_dim + 127) // 128)  # head dim 128 (the division here is ceil div)
 num_kv_heads = num_heads  # default is 1:1 GQA (Group Query Attention) ratio (i.e. GQA is disabled)
 print0(f"num_layers: {num_layers}")
@@ -120,9 +102,7 @@ print0(f"num_kv_heads: {num_kv_heads}")
 # Optimizer / data / training length related hyperparameters
 # figure out the needed gradient accumulation to reach the desired total batch size
 tokens_per_fwdbwd = device_batch_size * max_seq_len  # tokens per iteration for a single rank
-world_tokens_per_fwdbwd = (
-    tokens_per_fwdbwd * ddp_world_size
-)  # total tokens per iteration for all ranks
+world_tokens_per_fwdbwd = tokens_per_fwdbwd * ddp_world_size  # total tokens per iteration for all ranks
 assert total_batch_size % world_tokens_per_fwdbwd == 0, "Incompatible total batch size"
 grad_accum_steps = total_batch_size // world_tokens_per_fwdbwd
 print0(f"Tokens / micro-batch / rank: {device_batch_size} x {max_seq_len} = {tokens_per_fwdbwd:,}")
@@ -169,9 +149,7 @@ else:
 
 total_tokens = total_batch_size * num_iterations
 print0(f"Total number of training tokens: {total_tokens:,}")
-print0(
-    f"Tokens : Params ratio: {total_batch_size * num_iterations / num_params:.2f}"
-)  # Chinchilla is ~20
+print0(f"Tokens : Params ratio: {total_batch_size * num_iterations / num_params:.2f}")  # Chinchilla is ~20
 print0(f"Total training FLOPs estimate: {num_flops_per_token * total_tokens:e}")
 
 
@@ -189,13 +167,9 @@ adamw_optimizer, muon_optimizer = optimizers
 # Initialize the Dataloaders for training and validation
 base_dir = get_base_dir()
 token_dir = os.path.join(base_dir, "tokenized_data")
-train_loader = tokenizing_distributed_data_loader(
-    device_batch_size, max_seq_len, split="train", device=device
-)
+train_loader = tokenizing_distributed_data_loader(device_batch_size, max_seq_len, split="train", device=device)
 
-build_val_loader = lambda: tokenizing_distributed_data_loader(
-    device_batch_size, max_seq_len, split="val", device=device
-)
+build_val_loader = lambda: tokenizing_distributed_data_loader(device_batch_size, max_seq_len, split="val", device=device)
 x, y = next(train_loader)
 
 # -----------------------------------------------------------------------------
@@ -264,9 +238,7 @@ for step in range(num_iterations + 1):
     if core_metric_every > 0 and (last_step or (step > 0 and step % core_metric_every == 0)):
         model.eval()
         with autocast_ctx:
-            results = evaluate_model(
-                orig_model, tokenizer, device, max_per_task=core_metric_max_per_task
-            )
+            results = evaluate_model(orig_model, tokenizer, device, max_per_task=core_metric_max_per_task)
         print0(f"Step {step:05d} | CORE metric: {results['core_metric']:.4f}")
         wandb_run.log(
             {
@@ -295,9 +267,7 @@ for step in range(num_iterations + 1):
         for prompt in prompts:
             tokens = tokenizer(prompt, prepend="<|bos|>")
             with autocast_ctx:
-                sample, _ = engine.generate_batch(
-                    tokens, num_samples=1, max_tokens=16, temperature=0
-                )
+                sample, _ = engine.generate_batch(tokens, num_samples=1, max_tokens=16, temperature=0)
             print0(tokenizer.decode(sample[0]))
         model.train()
 
@@ -309,9 +279,7 @@ for step in range(num_iterations + 1):
             checkpoint_dir,
             step,
             orig_model.state_dict(),
-            [
-                opt.state_dict() for opt in optimizers
-            ],  # TODO: make sure saving across ranks is done correctly
+            [opt.state_dict() for opt in optimizers],  # TODO: make sure saving across ranks is done correctly
             {
                 "step": step,
                 "val_bpb": val_bpb,  # loss at last step
@@ -336,9 +304,7 @@ for step in range(num_iterations + 1):
         train_loss = loss.detach()
         loss = loss / grad_accum_steps
         loss.backward()
-        x, y = next(
-            train_loader
-        )  # prefetch the next batch while the GPU is busy with forward/backward
+        x, y = next(train_loader)  # prefetch the next batch while the GPU is busy with forward/backward
     # gradient clipping (TODO possibly experiment with)
     if grad_clip > 0.0:
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
@@ -359,22 +325,16 @@ for step in range(num_iterations + 1):
     # -----------------------------------------------------------------------------
 
     # logging
-    smooth_train_loss = (
-        ema_beta * smooth_train_loss + (1 - ema_beta) * train_loss.item()
-    )  # EMA the training loss
+    smooth_train_loss = ema_beta * smooth_train_loss + (1 - ema_beta) * train_loss.item()  # EMA the training loss
     debiased_smooth_loss = smooth_train_loss / (1 - ema_beta ** (step + 1))  # debias the EMA
     pct_done = 100 * step / num_iterations
     tok_per_sec = int(world_tokens_per_fwdbwd / dt)
     flops_per_sec = num_flops_per_token * total_batch_size / dt
-    promised_flops_per_sec_h100 = (
-        989e12 * ddp_world_size
-    )  # bfloat16 H100 SXM and without 2:4 sparsity
+    promised_flops_per_sec_h100 = 989e12 * ddp_world_size  # bfloat16 H100 SXM and without 2:4 sparsity
     mfu = 100 * flops_per_sec / promised_flops_per_sec_h100  # in %
     if step > 10:
         total_training_time += dt  # only count the time after the first 10 steps
-    print0(
-        f"step {step:05d}/{num_iterations:05d} ({pct_done:.2f}%) | loss: {debiased_smooth_loss:.6f} | lrm: {lrm:.2f} | dt: {dt * 1000:.2f}ms | tok/sec: {tok_per_sec:,} | mfu: {mfu:.2f} | total time: {total_training_time/60:.2f}m"
-    )
+    print0(f"step {step:05d}/{num_iterations:05d} ({pct_done:.2f}%) | loss: {debiased_smooth_loss:.6f} | lrm: {lrm:.2f} | dt: {dt * 1000:.2f}ms | tok/sec: {tok_per_sec:,} | mfu: {mfu:.2f} | total time: {total_training_time/60:.2f}m")
     if step % 100 == 0:
         wandb_run.log(
             {
