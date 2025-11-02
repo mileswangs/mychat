@@ -5,8 +5,8 @@ import os
 import torch
 import torch.distributed as dist
 import wandb
-from mychat.checkpoint_manager import load_model
-from mychat.common import DummyWandb, autodetect_device_type, compute_init, get_base_dir, print0
+from mychat.checkpoint_manager import load_model, save_checkpoint
+from mychat.common import DummyWandb, autodetect_device_type, compute_cleanup, compute_init, get_base_dir, print0
 from mychat.engine import Engine
 from scripts.chat_eval import run_chat_eval
 from tasks.common import TaskMixture
@@ -250,3 +250,45 @@ for step in range(num_iterations):
         }
     )
     step += 1
+
+
+# Save the model at the end of the run
+if master_process:
+    base_dir = get_base_dir()
+    depth = model.config.n_layer
+    model_tag = f"d{depth}"  # base the model tag on the depth of the base model
+    checkpoint_dir = os.path.join(base_dir, "chatsft_checkpoints", model_tag)
+    model_config_kwargs = model.config.__dict__  # slightly naughty, abusing the simplicity of GPTConfig, TODO nicer
+    save_checkpoint(
+        checkpoint_dir,
+        step,
+        model.state_dict(),
+        None,  # note: we don't bother to save the optimizer state
+        {
+            "step": step,
+            "val_loss": val_loss,
+            **metrics,
+            "model_config": model_config_kwargs,
+        },
+    )
+    print(f"✅ Saved model checkpoint to {checkpoint_dir}")
+
+# Log to report
+from mychat.report import get_report
+
+get_report().log(
+    section="Chat SFT",
+    data=[
+        user_config,  # CLI args
+        {
+            "Training rows": len(train_ds),
+            "Number of iterations": num_iterations,
+            "Training loss": train_loss_item,
+            "Validation loss": val_loss,
+        },
+    ],
+)
+
+# Cleanup
+wandb_run.finish()
+compute_cleanup()
