@@ -114,9 +114,11 @@ torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid --max-ne
 # Supervised Fine-Tuning (SFT) with reduced iterations for testing
 
 # train sft with reduced iterations and re-eval
+# With 8 GPUs and device_batch_size=1: examples_per_step = 1 * 8 = 8
+# target_examples_per_step must be a multiple of 8
 torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- \
     --device_batch_size=1 \
-    --target_examples_per_step=4 \
+    --target_examples_per_step=8 \
     --num_iterations=100 \
     --eval_steps=4 \
     --eval_metrics_max_problems=16 \
