@@ -88,7 +88,7 @@ class MMLU(Task):
             assert split == "train", "auxiliary_train subset only has train split"
         self.subset = subset
         self.split = split
-        self.ds = load_dataset("cais/mmlu", subset=subset, split=split).shuffle(seed=42)
+        self.ds = load_dataset("cais/mmlu", name=subset, split=split).shuffle(seed=42)
         if subset == "auxiliary_train":
             # I don't understand why but the auxiliary_train rows have some weird additional 'train' wrapper
             self.ds = self.ds.map(lambda row: row["train"], remove_columns=["train"])
@@ -120,8 +120,6 @@ class MMLU(Task):
         return conversation
 
     def evaluate(self, conversation, assistant_response):
-        assert (
-            assistant_response in self.letters
-        ), f'MMLU answer "{assistant_response}" not in choices {self.letters}'
+        assert assistant_response in self.letters, f'MMLU answer "{assistant_response}" not in choices {self.letters}'
         assistant_message = conversation["messages"][-1]["content"]
         return assistant_message == assistant_response
