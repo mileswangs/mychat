@@ -1,4 +1,4 @@
-from random import random
+import random
 import torch
 import torch.distributed as dist
 from jinja2 import Template
