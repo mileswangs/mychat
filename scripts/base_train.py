@@ -84,6 +84,7 @@ wandb_run = DummyWandb() if use_dummy_wandb else wandb.init(project="mychat", na
 
 # Tokenizer will be useful for evaluation, also we need vocab size
 tokenizer = get_tokenizer()
+print0(type(tokenizer))
 token_bytes = get_token_bytes(device=device)
 vocab_size = tokenizer.get_vocab_size()
 print0(f"Vocab size: {vocab_size}")
