@@ -35,37 +35,37 @@ python -m mychat.report reset
 # ---------------------------------------------------------
 # Tokenizer
 
-# # Install rust/cargo 
-# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-# source "$HOME/.cargo/env"
-# # build the Rustbpe tokenizer
-# uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
+# Install rust/cargo 
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+# build the Rustbpe tokenizer
+uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
 
-# # Download the first ~2B characters of pretrain dataset
-# # look at dev/repackage_data_reference.py for details on how the data was prepared
-# # each data shard is ~250M char
-# # so we download 2e9 / 250e6 = 8 data shards at this point
-# # each shard is ~100MB of text(compressed), so this is about 800MB of on disk
-# python -m mychat.dataset -n 8
-# # Immediately also kick off downloading more shards in the background while tokenizer trains
-# # See comment below for why 240 is the right number here
-# python -m mychat.dataset -n 240 & DATASET_DOWNLOAD_PID=$!
-# # Train the tokenizer with vocab size 2**16 = 65536 on ~2B characters of data
-# python -m scripts.tok_train --max_chars=2000000000 
-# # evaluate the tokenizer (report compression ratio)
-# python -m scripts.tok_eval
+# Download the first ~2B characters of pretrain dataset
+# look at dev/repackage_data_reference.py for details on how the data was prepared
+# each data shard is ~250M char
+# so we download 2e9 / 250e6 = 8 data shards at this point
+# each shard is ~100MB of text(compressed), so this is about 800MB of on disk
+python -m mychat.dataset -n 8
+# Immediately also kick off downloading more shards in the background while tokenizer trains
+# See comment below for why 240 is the right number here
+python -m mychat.dataset -n 240 & DATASET_DOWNLOAD_PID=$!
+# Train the tokenizer with vocab size 2**16 = 65536 on ~2B characters of data
+python -m scripts.tok_train --max_chars=2000000000 
+# evaluate the tokenizer (report compression ratio)
+python -m scripts.tok_eval
 
 # ---------------------------------------------------------
 # Pretrain
 
-# #download the eval bundle to evaluate Core metric when training
-# EVAL_BUNDLE_URL=https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
-# if [ ! -d "$MYCHAT_BASE_DIR/eval_bundle" ]; then
-#     curl -L -o eval_bundle.zip $EVAL_BUNDLE_URL
-#     unzip -q eval_bundle.zip
-#     rm eval_bundle.zip
-#     mv eval_bundle $MYCHAT_BASE_DIR
-# fi
+#download the eval bundle to evaluate Core metric when training
+EVAL_BUNDLE_URL=https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
+if [ ! -d "$MYCHAT_BASE_DIR/eval_bundle" ]; then
+    curl -L -o eval_bundle.zip $EVAL_BUNDLE_URL
+    unzip -q eval_bundle.zip
+    rm eval_bundle.zip
+    mv eval_bundle $MYCHAT_BASE_DIR
+fi
 
 # The d20 model is 561M parameters.
 # Chinchilla says #tokens = 20X #params, so we need 561e6 * 20 = 11.2B tokens.
@@ -76,12 +76,12 @@ python -m mychat.report reset
 echo "Waiting for dataset download to complete..."
 wait $DATASET_DOWNLOAD_PID
 
-# pretrain the d20 model
-# torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- --depth=20 --run=$WANDB_RUN --num_iterations=1
-# # evaluate the model on a larger chunk of train/val data and draw some samples
-# torchrun --standalone --nproc_per_node=8 -m scripts.base_loss
-# # evaluate the model on CORE tasks
-# torchrun --standalone --nproc_per_node=8 -m scripts.base_eval
+pretrain the d20 model
+torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- --depth=20 --run=$WANDB_RUN --num_iterations=1
+# evaluate the model on a larger chunk of train/val data and draw some samples
+torchrun --standalone --nproc_per_node=8 -m scripts.base_loss
+# evaluate the model on CORE tasks
+torchrun --standalone --nproc_per_node=8 -m scripts.base_eval
 
 # # ------------------------------------------------------------------------------------
 # # Midtrain(tech the model conversation special tokens, tool use, multiple during training (~162mb)
@@ -97,22 +97,22 @@ fi
 torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- --run=$WANDB_RUN
 torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid
 
-# # ------------------------------------------------------------------------------------
-# # Supervised Fine-Tuning (SFT) (domain adaptation to each sequence all by itself per row)
+# ------------------------------------------------------------------------------------
+# Supervised Fine-Tuning (SFT) (domain adaptation to each sequence all by itself per row)
 
-# # train sft and re-eval right way (should see a small bump)
-# torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- --run=$WANDB_RUN
-# torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i sft
+# train sft and re-eval right way (should see a small bump)
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- --run=$WANDB_RUN
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i sft
 
-# # chat with the model over CLI! Leave out the -p to chat interactively
-# # python -m scripts.chat_cli -p "Why is the sky blue?"
+# chat with the model over CLI! Leave out the -p to chat interactively
+# python -m scripts.chat_cli -p "Why is the sky blue?"
 
-# # ------------------------------------------------------------------------------------
-# # Reinforcement learning, currently only on gsm8k
-# torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- --run=$WANDB_RUN
-# torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K
+# ------------------------------------------------------------------------------------
+# Reinforcement learning, currently only on gsm8k
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- --run=$WANDB_RUN
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K
 
-# # ------------------------------------------------------------------------------------
-# # Generate the full report by putting together all the sections
-# # report.md is the output and will be copied to current directory for convenience
-# python -m mychat.report generate
+# ------------------------------------------------------------------------------------
+# Generate the full report by putting together all the sections
+# report.md is the output and will be copied to current directory for convenience
+python -m mychat.report generate
