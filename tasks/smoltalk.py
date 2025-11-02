@@ -14,9 +14,7 @@ class SmolTalk(Task):
     def __init__(self, split, **kwargs):
         super().__init__(**kwargs)
         assert split in ["train", "test"]
-        self.ds = load_dataset("HuggingFaceTB/smol-smoltalk", split=split).shuffle(
-            seed=42
-        )
+        self.ds = load_dataset("HuggingFaceTB/smol-smoltalk", split).shuffle(seed=42)
         self.length = len(self.ds)
 
     def num_examples(self):
@@ -37,15 +35,11 @@ class SmolTalk(Task):
         else:
             rest_messages = messages
 
-        assert (
-            len(rest_messages) >= 2
-        ), "SmolTalk messages must have at least 2 messages"
+        assert len(rest_messages) >= 2, "SmolTalk messages must have at least 2 messages"
 
         for i, msg in enumerate(rest_messages):
             expected_role = "user" if i % 2 == 0 else "assistant"
-            assert (
-                msg["role"] == expected_role
-            ), f"SmolTalk message {i} role must be {expected_role}"
+            assert msg["role"] == expected_role, f"SmolTalk message {i} role must be {expected_role}"
             assert isinstance(msg["content"], str), f"content must be a string"
 
         conversation = {"messages": messages}

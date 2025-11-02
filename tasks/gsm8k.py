@@ -35,9 +35,7 @@ class GSM8K(Task):
         super().__init__(**kwargs)
         assert subset in ["main", "socratic"]
         assert split in ["train", "validation", "test"]
-        self.ds = load_dataset("openai/gsm8k", subset=subset, split=split).shuffle(
-            seed=42
-        )
+        self.ds = load_dataset("openai/gsm8k", subset, split=split).shuffle(seed=42)
 
     @property
     def eval_type(self):
@@ -98,18 +96,12 @@ class GSM8K(Task):
         TODO: Technically, assistant_response should be a Message (either a string or a list of parts)
               We can handle this later possibly. For now just assume string.
         """
-        assert isinstance(
-            assistant_response, str
-        ), f"Expected assistant_response to be str but got {type(assistant_response)}"
+        assert isinstance(assistant_response, str), f"Expected assistant_response to be str but got {type(assistant_response)}"
 
         assistant_message = conversation["messages"][-1]
-        assert (
-            assistant_message["role"] == "assistant"
-        ), f"Expected last message to be assistant but got {assistant_message['role']}"
+        assert assistant_message["role"] == "assistant", f"Expected last message to be assistant but got {assistant_message['role']}"
 
-        assert isinstance(
-            assistant_message["content"], list
-        ), "Expected assistant message content to be list of parts"
+        assert isinstance(assistant_message["content"], list), "Expected assistant message content to be list of parts"
         last_text_part = assistant_message["content"][-1]["text"]
         ref_num = extract_answer(last_text_part)
         pred_num = extract_answer(assistant_response)
