@@ -14,7 +14,7 @@ class SmolTalk(Task):
     def __init__(self, split, **kwargs):
         super().__init__(**kwargs)
         assert split in ["train", "test"]
-        self.ds = load_dataset("HuggingFaceTB/smol-smoltalk", split).shuffle(seed=42)
+        self.ds = load_dataset("HuggingFaceTB/smol-smoltalk", split=split).shuffle(seed=42)
         self.length = len(self.ds)
 
     def num_examples(self):
