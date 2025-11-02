@@ -67,20 +67,22 @@ fi
 # Using 100 iterations instead of full training
 # With 8 GPUs, batch_size=1, seq_len=1024: world_tokens = 8*1*1024 = 8192
 # So total_batch_size must be a multiple of 8192
+# eval_tokens must be >= world_tokens (8192) to have at least 1 eval step
 torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- \
     --depth=4 \
     --max_seq_len=1024 \
     --device_batch_size=1 \
     --total_batch_size=8192 \
     --eval_every=50 \
-    --eval_tokens=4096 \
+    --eval_tokens=16384 \
     --core_metric_every=50 \
     --core_metric_max_per_task=12 \
     --sample_every=50 \
     --num_iterations=100 \
     --run=$WANDB_RUN
 # evaluate the model on a smaller chunk of train/val data
-torchrun --standalone --nproc_per_node=8 -m scripts.base_loss -- --device_batch_size=1 --split_tokens=4096
+# split_tokens must be >= world_tokens (8192)
+torchrun --standalone --nproc_per_node=8 -m scripts.base_loss -- --device_batch_size=1 --split_tokens=16384
 # evaluate the model on CORE tasks (reduced problem set for testing)
 torchrun --standalone --nproc_per_node=8 -m scripts.base_eval -- --max-per-task=16
 
@@ -97,11 +99,12 @@ fi
 
 # run midtrain with reduced iterations and eval the model
 # With 8 GPUs, batch_size=1, seq_len=1024: world_tokens = 8192
+# eval_tokens must be >= 8192
 torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- \
     --max_seq_len=1024 \
     --device_batch_size=1 \
     --eval_every=50 \
-    --eval_tokens=4096 \
+    --eval_tokens=16384 \
     --total_batch_size=8192 \
     --num_iterations=100 \
     --run=$WANDB_RUN
