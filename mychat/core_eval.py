@@ -41,10 +41,7 @@ def render_prompts_schema(item, continuation_delimiter, fewshot_examples=None):
         "continuation_delimiter": continuation_delimiter,
         "item": item,
     }
-    prompts = [
-        template.render(context=context_option, **context)
-        for context_option in item["context_options"]
-    ]
+    prompts = [template.render(context=context_option, **context) for context_option in item["context_options"]]
     return prompts
 
 
@@ -128,9 +125,7 @@ def batch_sequences_lm(tokenizer, prompts):
     tokens_without, tokens_with = tokens
     start_idx, end_idx = len(tokens_without), len(tokens_with)
     assert start_idx < end_idx, "prompt without is supposed to be a prefix of prompt with"
-    assert (
-        tokens_without == tokens_with[:start_idx]
-    ), "prompt without is supposed to be a prefix of prompt with"
+    assert tokens_without == tokens_with[:start_idx], "prompt without is supposed to be a prefix of prompt with"
     # we only need the with continuation prompt in the LM task, i.e. batch size of 1
     return [tokens_with], [start_idx], [end_idx]
 
@@ -179,13 +174,13 @@ def evaluate_example(idx, model, tokenizer, data, device, task_meta) -> bool:
     # render prompts and batch sequences base on task type
     if task_type == "multiple_choice":
         prompts = render_prompts_mc(item, continuation_delimiter, fewshot_examples)
-        tokens, start_idxs, end_idxs = batch_sequences_mc(prompts, tokenizer)
+        tokens, start_idxs, end_idxs = batch_sequences_mc(tokenizer, prompts)
     elif task_type == "schema":
         prompts = render_prompts_schema(item, continuation_delimiter, fewshot_examples)
-        tokens, start_idxs, end_idxs = batch_sequences_schema(prompts, tokenizer)
+        tokens, start_idxs, end_idxs = batch_sequences_schema(tokenizer, prompts)
     elif task_type == "language_modeling":
         prompts = render_prompts_lm(item, continuation_delimiter, fewshot_examples)
-        tokens, start_idxs, end_idxs = batch_sequences_lm(prompts, tokenizer)
+        tokens, start_idxs, end_idxs = batch_sequences_lm(tokenizer, prompts)
     else:
         raise ValueError(f"Unsupported task type: {task_type}")
 
@@ -222,10 +217,7 @@ def evaluate_example(idx, model, tokenizer, data, device, task_meta) -> bool:
         actual_tokens = input_ids[0, si:ei]
         is_correct = torch.all(predicted_tokens == actual_tokens).item()
     elif task_type in ["multiple_choice", "schema"]:
-        mean_losses = [
-            losses[i, si - 1 : ei - 1].mean().item()
-            for i, (si, ei) in enumerate(zip(start_idxs, end_idxs))
-        ]
+        mean_losses = [losses[i, si - 1 : ei - 1].mean().item() for i, (si, ei) in enumerate(zip(start_idxs, end_idxs))]
         pred_idx = mean_losses.index(min(mean_losses))
         is_correct = pred_idx == item["gold"]
     else:
