@@ -83,36 +83,36 @@ torchrun --standalone --nproc_per_node=8 -m scripts.base_loss
 # evaluate the model on CORE tasks
 torchrun --standalone --nproc_per_node=8 -m scripts.base_eval
 
-# ------------------------------------------------------------------------------------
-# Midtrain(tech the model conversation special tokens, tool use, multiple during training (~162mb)
+# # ------------------------------------------------------------------------------------
+# # Midtrain(tech the model conversation special tokens, tool use, multiple during training (~162mb)
 
-#download identify conversations to impart a personality to the model
-#see dev/gen_synthetic_data.py for details on how this data was prepared and to get a sense of how you can easily tune it
-if [ ! -f "$MYCHAT_BASE_DIR/identity_conversations.jsonl" ]; then
-    echo "Downloading identity conversations..."
-    curl -L -o "$MYCHAT_BASE_DIR/identity_conversations.jsonl" https://karpathy-public.s3.us-west-2.amazonaws.com/identity_conversations.jsonl
-fi
+# #download identify conversations to impart a personality to the model
+# #see dev/gen_synthetic_data.py for details on how this data was prepared and to get a sense of how you can easily tune it
+# if [ ! -f "$MYCHAT_BASE_DIR/identity_conversations.jsonl" ]; then
+#     echo "Downloading identity conversations..."
+#     curl -L -o "$MYCHAT_BASE_DIR/identity_conversations.jsonl" https://karpathy-public.s3.us-west-2.amazonaws.com/identity_conversations.jsonl
+# fi
 
-# run midtrain and eval the model
-torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- --run=$WANDB_RUN
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid
+# # run midtrain and eval the model
+# torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- --run=$WANDB_RUN
+# torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid
 
-# ------------------------------------------------------------------------------------
-# Supervised Fine-Tuning (SFT) (domain adaptation to each sequence all by itself per row)
+# # ------------------------------------------------------------------------------------
+# # Supervised Fine-Tuning (SFT) (domain adaptation to each sequence all by itself per row)
 
-# train sft and re-eval right way (should see a small bump)
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- --run=$WANDB_RUN
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i sft
+# # train sft and re-eval right way (should see a small bump)
+# torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- --run=$WANDB_RUN
+# torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i sft
 
-# chat with the model over CLI! Leave out the -p to chat interactively
-# python -m scripts.chat_cli -p "Why is the sky blue?"
+# # chat with the model over CLI! Leave out the -p to chat interactively
+# # python -m scripts.chat_cli -p "Why is the sky blue?"
 
-# ------------------------------------------------------------------------------------
-# Reinforcement learning, currently only on gsm8k
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- --run=$WANDB_RUN
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K
+# # ------------------------------------------------------------------------------------
+# # Reinforcement learning, currently only on gsm8k
+# torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- --run=$WANDB_RUN
+# torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K
 
-# ------------------------------------------------------------------------------------
-# Generate the full report by putting together all the sections
-# report.md is the output and will be copied to current directory for convenience
-python -m mychat.report generate
+# # ------------------------------------------------------------------------------------
+# # Generate the full report by putting together all the sections
+# # report.md is the output and will be copied to current directory for convenience
+# python -m mychat.report generate
