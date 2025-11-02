@@ -209,6 +209,7 @@ ema_beta = 0.9
 total_training_time = 0
 
 for step in range(num_iterations + 1):
+    print0(f"=== Step {step}/{num_iterations} ===")
     last_step = step == num_iterations
     flops_so_far = num_flops_per_token * total_batch_size * step
 
