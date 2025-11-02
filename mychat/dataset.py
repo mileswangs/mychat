@@ -51,7 +51,7 @@ def download_single_file(index: int):
         print(f"{file_path} already exists, skipping download.")
         return
     url = f"{base_url}/{filename}"
-    print(f"Downloading {filename}")
+    # print(f"Downloading {filename}")
 
     max_attempts = 5
     for attempt in range(1, max_attempts + 1):
