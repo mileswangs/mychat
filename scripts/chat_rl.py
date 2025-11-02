@@ -25,8 +25,7 @@ import torch.distributed as dist
 import wandb
 
 from mychat.checkpoint_manager import load_model, save_checkpoint
-from mychat.common import DummyWandb, compute_cleanup, compute_init, get_base_dir
-from mychat.configurator import print0
+from mychat.common import DummyWandb, compute_cleanup, compute_init, get_base_dir, print0
 from mychat.engine import Engine
 from tasks.gsm8k import GSM8K
 
