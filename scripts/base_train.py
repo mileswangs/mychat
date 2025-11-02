@@ -42,10 +42,10 @@ device_type = ""
 
 # Model architecture
 depth = 20
-max_seq_len = 128  # max context length
+max_seq_len = 2048
 # Training horizon. Only one of these 3 will be used, in this order of precedence.
 num_iterations = -1  # (-1 = disable)
-target_flops = -1  # use target flops to calculate iterations  (-1 = disable)
+target_flops = -1.0  # use target flops to calculate iterations  (-1 = disable)
 target_param_data_ratio = 20  # calculate num iterations to maintain fix data:param ratio(Chinchilla= 20)
 # Optimization
 device_batch_size = 32
