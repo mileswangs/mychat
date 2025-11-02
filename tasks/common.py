@@ -4,9 +4,7 @@ import random
 class Task:
     def __init__(self, start=0, stop=None, step=1):
         assert start >= 0, f"start must be non-negative but got {start}"
-        assert (
-            stop is None or stop > start
-        ), f"stop must be None or greater than start but got {stop}"
+        assert stop is None or stop > start, f"stop must be None or greater than start but got {stop}"
         assert step > 0, f"step must be positive but got {step}"
         self.start = start
         self.stop = stop
@@ -65,10 +63,8 @@ class TaskMixture(Task):
     def num_examples(self):
         return self.num_conversations
 
-    def get_conversation(self, index):
-        assert (
-            index < self.num_conversations
-        ), f"Index {index} out of mixture range {self.num_conversations}"
+    def get_example(self, index):
+        assert index < self.num_conversations, f"Index {index} out of mixture range {self.num_conversations}"
         task_idx, local_idx = self.index_map[index]
         return self.tasks[task_idx].get_example(local_idx)
 
@@ -90,8 +86,6 @@ def render_mc(question, letters, choices):
     about this too much, but smaller models do care about some of these details.
     """
     query = f"Multiple Choice question: {question}\n"
-    query += "".join(
-        [f"- {choice}={letter}\n" for letter, choice in zip(letters, choices)]
-    )
+    query += "".join([f"- {choice}={letter}\n" for letter, choice in zip(letters, choices)])
     query += "\nRespond only with the letter of the correct answer."
     return query
