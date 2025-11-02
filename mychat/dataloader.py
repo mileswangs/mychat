@@ -7,9 +7,7 @@ from mychat.dataset import parquets_iter_batched
 from mychat.tokenizer import get_tokenizer
 
 
-def tokenizing_distributed_data_loader(
-    B, T, split, tokenizer_threads=4, tokenizer_batch_size=1024, device="cuda"
-):
+def tokenizing_distributed_data_loader(B, T, split, tokenizer_threads=4, tokenizer_batch_size=1024, device="cuda"):
     """stream pretraining text from parquet files, tokenize, and yield token batches."""
     assert split in ["train", "val"]
     ddp, ddp_rank, ddp_local_rank, ddp_world_size = get_dist_info()
@@ -35,9 +33,7 @@ def tokenizing_distributed_data_loader(
         # Accumulate enough tokens for one iteration before yielding
         while len(token_buffer) < needed_tokens:
             doc_path = next(batches)
-            token_lists = tokenizer.encode(
-                doc_path, prepend=bos_token, num_threads=tokenizer_threads
-            )
+            token_lists = tokenizer.encode(doc_path, prepend=bos_token, num_threads=tokenizer_threads)
             for token_list in token_lists:
                 token_buffer.extend(token_list)
             batch_index += 1
@@ -47,8 +43,8 @@ def tokenizing_distributed_data_loader(
         scratch = torch.tensor(tokens, dtype=torch.int64, pin_memory=(device == "cuda"))
         # Create the input/targets as 1D tensors
         inputs_cpu = scratch[:-1].to(dtype=torch.int32)
-        targets_cpu = scratch[1:].to(dtype=torch.int32)
+        targets_cpu = scratch[1:]
         # Reshape to 2D and move to GPU async
         inputs = inputs_cpu.view(B, T).to(device=device, dtype=torch.int32, non_blocking=True)
-        targets = targets_cpu.view(B, T).to(device=device, dtype=torch.int32, non_blocking=True)
+        targets = targets_cpu.view(B, T).to(device=device, dtype=torch.int64, non_blocking=True)
         yield inputs, targets

@@ -157,7 +157,6 @@ class GPT(nn.Module):
         # so let's just over-compute them, but assert fail if we ever reach that amount.
         # In the future we can dynamically grow the cache, for now it's fine.
         self.rotary_seq_len = config.sequence_len * 10  # 10X over-compute should be enough, TODO make nicer?
-        self.max_seq_len = self.rotary_seq_len  # Expose max sequence length for evaluation code
         head_dim = config.n_embd // config.n_head
         cos, sin = self._precompute_rotary_embeddings(self.rotary_seq_len, head_dim)
         self.register_buffer("cos", cos, persistent=False)  # persistent=False means it's not saved to the checkpoint
@@ -267,7 +266,7 @@ class GPT(nn.Module):
             logits = logits.float()
             loss = F.cross_entropy(
                 logits.view(-1, logits.size(-1)),
-                target.view(-1).long(),  # Ensure targets are int64 for cross_entropy
+                target.view(-1),  # Ensure targets are int64 for cross_entropy
                 ignore_index=-1,  # for sft masked tokens
                 reduction=loss_reduction,
             )
