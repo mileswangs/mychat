@@ -147,9 +147,8 @@ if true; then
     echo "==> Running RL training..."
     # chat_rl uses num_epochs instead of num_iterations
     # It will run (len(train_task) // examples_per_step) * num_epochs steps
-    torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- \
-        --num_epochs=1 \
-        --run=$WANDB_RUN
+    torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- --run=$WANDB_RUN
+
     torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K --max-problems=20
 fi
 
