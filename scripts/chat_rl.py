@@ -66,7 +66,7 @@ use_dummy_wandb = run == "dummy" or not master_process
 wandb_run = DummyWandb() if use_dummy_wandb else wandb.init(project="mychat-rl", name=run, config=user_config)
 
 # Init model and tokenizer
-model, tokenizer, meta = load_model(source, device, phase="train")
+model, tokenizer, meta = load_model(source, device, phase="eval")
 engine = Engine(model, tokenizer)
 
 # -----------------------------------------------------------------------------
@@ -125,6 +125,8 @@ def get_batch():
         padded_generated_token_sequences = [seq + [assistant_end] * (max_length - len(seq)) for seq in generated_token_sequences]
         padded_masks = [mask + [0] * (max_length - len(mask)) for mask in masks]
         # Stack up the sequences and masks into PyTorch tensors
+        # Convert to nested list of Python ints to ensure compatibility
+        padded_generated_token_sequences = [[int(t) for t in seq] for seq in padded_generated_token_sequences]
         ids = torch.tensor(padded_generated_token_sequences, dtype=torch.long, device=device)
         mask_ids = torch.tensor(padded_masks, dtype=torch.long, device=device)
         # Generate autoregressive inputs and targets to the Transformer
