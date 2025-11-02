@@ -122,8 +122,7 @@ def get_batch():
 
         # Pad the sequences so that their lengths (in time) match
         max_length = max(len(seq) for seq in generated_token_sequences)
-        # Convert all tokens to Python int while padding to ensure type compatibility
-        padded_generated_token_sequences = [[int(t) for t in seq] + [assistant_end] * (max_length - len(seq)) for seq in generated_token_sequences]
+        padded_generated_token_sequences = [seq + [assistant_end] * (max_length - len(seq)) for seq in generated_token_sequences]
         padded_masks = [mask + [0] * (max_length - len(mask)) for mask in masks]
         # Stack up the sequences and masks into PyTorch tensors
         ids = torch.tensor(padded_generated_token_sequences, dtype=torch.long, device=device)
