@@ -267,7 +267,7 @@ class GPT(nn.Module):
             logits = logits.float()
             loss = F.cross_entropy(
                 logits.view(-1, logits.size(-1)),
-                target.view(-1),
+                target.view(-1).long(),  # Ensure targets are int64 for cross_entropy
                 ignore_index=-1,  # for sft masked tokens
                 reduction=loss_reduction,
             )
