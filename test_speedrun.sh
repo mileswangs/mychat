@@ -65,11 +65,13 @@ fi
 # Train a small d4 model for testing (instead of d20)
 # This is much faster and sufficient for verifying the pipeline works
 # Using 100 iterations instead of full training
+# With 8 GPUs, batch_size=1, seq_len=1024: world_tokens = 8*1*1024 = 8192
+# So total_batch_size must be a multiple of 8192
 torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- \
     --depth=4 \
     --max_seq_len=1024 \
     --device_batch_size=1 \
-    --total_batch_size=1024 \
+    --total_batch_size=8192 \
     --eval_every=50 \
     --eval_tokens=4096 \
     --core_metric_every=50 \
@@ -94,12 +96,13 @@ if [ ! -f "$MYCHAT_BASE_DIR/identity_conversations.jsonl" ]; then
 fi
 
 # run midtrain with reduced iterations and eval the model
+# With 8 GPUs, batch_size=1, seq_len=1024: world_tokens = 8192
 torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- \
     --max_seq_len=1024 \
     --device_batch_size=1 \
     --eval_every=50 \
     --eval_tokens=4096 \
-    --total_batch_size=1024 \
+    --total_batch_size=8192 \
     --num_iterations=100 \
     --run=$WANDB_RUN
 torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid --max-new-tokens=128 --max-problems=20
