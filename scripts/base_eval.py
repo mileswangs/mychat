@@ -5,8 +5,7 @@ import time
 
 import pandas as pd
 import yaml
-from mychat.common import get_base_dir
-from mychat.configurator import print0
+from mychat.common import get_base_dir, print0
 from mychat.core_eval import evaluate_task
 
 
@@ -59,9 +58,7 @@ def evaluate_model(model, tokenizer, device, max_per_task=1):
         centered_result = (accurary - 0.01 * random_baseline) / (1 - 0.01 * random_baseline)
         centered_results[label] = centered_result
         end_time = time.time()
-        print0(
-            f"accuracy: {accurary:.4f}% | centered : {centered_result:.4f}%, time: {end_time - start_time:.2f}s"
-        )
+        print0(f"accuracy: {accurary:.4f}% | centered : {centered_result:.4f}%, time: {end_time - start_time:.2f}s")
 
     core_metric = sum(centered_results.values()) / len(centered_results)
     out = {"results": results, "centered_results": centered_results, "core_metric": core_metric}
