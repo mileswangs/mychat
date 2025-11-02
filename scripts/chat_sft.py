@@ -77,7 +77,7 @@ val_ds = SmolTalk(split="test")  # general conversations, 24K rows (though we do
 
 
 def sft_data_generator(dataset, batch_size):
-    pad_token_id = tokenizer.encode_special("<|assitant_end|>")[0]
+    pad_token_id = tokenizer.encode_special("<|assistant_end|>")[0]
 
     # prepares a list of tokenized conversations into a batch and yields
     def collecte_and_yield(batch):
