@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/Users/wangshuo/Desktop/mychat/scripts/chat_rl.py", line 70, in <module>
+    model, tokenizer, meta = load_model(source, device, phase="eval")
+  File "/Users/wangshuo/Desktop/mychat/mychat/checkpoint_manager.py", line 154, in load_model
+    return load_model_from_dir(checkpoints_dir, *args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/mychat/checkpoint_manager.py", line 132, in load_model_from_dir
+    model_tag = find_largest_model(checkpoints_dir)
+  File "/Users/wangshuo/Desktop/mychat/mychat/checkpoint_manager.py", line 98, in find_largest_model
+    model_tags = [f for f in os.listdir(checkpoint_dir) if os.path.isdir(os.path.join(checkpoint_dir, f))]
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/wangshuo/.cache/mychat/chatsft_checkpoints'
+Traceback (most recent call last):
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/Users/wangshuo/Desktop/mychat/scripts/chat_rl.py", line 70, in <module>
+    model, tokenizer, meta = load_model(source, device, phase="eval")
+  File "/Users/wangshuo/Desktop/mychat/mychat/checkpoint_manager.py", line 154, in load_model
+    return load_model_from_dir(checkpoints_dir, *args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/mychat/checkpoint_manager.py", line 132, in load_model_from_dir
+    model_tag = find_largest_model(checkpoints_dir)
+  File "/Users/wangshuo/Desktop/mychat/mychat/checkpoint_manager.py", line 98, in find_largest_model
+    model_tags = [f for f in os.listdir(checkpoint_dir) if os.path.isdir(os.path.join(checkpoint_dir, f))]
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/wangshuo/.cache/mychat/chatsft_checkpoints'

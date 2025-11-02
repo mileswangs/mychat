@@ -1,0 +1,18 @@
+{
+  "os":  "macOS-14.6.1-arm64-arm-64bit",
+  "python":  "CPython 3.10.16",
+  "startedAt":  "2025-11-02T09:32:03.130399Z",
+  "args":  [
+    "--run="
+  ],
+  "program":  "-m scripts.chat_rl",
+  "git":  {
+    "remote":  "git@github.com:mileswangs/mychat.git",
+    "commit":  "827b9f5f6c6389190b5dc610519c09beca11af60"
+  },
+  "email":  "ws18022@outlook.com",
+  "root":  "/Users/wangshuo/Desktop/mychat",
+  "host":  "wangshuodeMacBook-Pro.local",
+  "executable":  "/Users/wangshuo/Desktop/mychat/.venv/bin/python",
+  "writerId":  "o3if80b6b7fagufk85fms4ljsmd7ubnd"
+}
