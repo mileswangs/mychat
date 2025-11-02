@@ -36,36 +36,36 @@ python -m mychat.report reset
 # Tokenizer
 
 # Install rust/cargo 
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+# source "$HOME/.cargo/env"
 # build the Rustbpe tokenizer
-uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
+# uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
 
 # Download the first ~2B characters of pretrain dataset
 # look at dev/repackage_data_reference.py for details on how the data was prepared
 # each data shard is ~250M char
 # so we download 2e9 / 250e6 = 8 data shards at this point
 # each shard is ~100MB of text(compressed), so this is about 800MB of on disk
-python -m mychat.dataset -n 8
+# python -m mychat.dataset -n 8
 # Immediately also kick off downloading more shards in the background while tokenizer trains
 # See comment below for why 240 is the right number here
-python -m mychat.dataset -n 240 & DATASET_DOWNLOAD_PID=$!
+# python -m mychat.dataset -n 240 & DATASET_DOWNLOAD_PID=$!
 # Train the tokenizer with vocab size 2**16 = 65536 on ~2B characters of data
-python -m scripts.tok_train --max_chars=2000000000 
+# python -m scripts.tok_train --max_chars=2000000000 
 # evaluate the tokenizer (report compression ratio)
-python -m scripts.tok_eval
+# python -m scripts.tok_eval
 
 # ---------------------------------------------------------
 # Pretrain
 
 #download the eval bundle to evaluate Core metric when training
-EVAL_BUNDLE_URL=https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
-if [ ! -d "$MYCHAT_BASE_DIR/eval_bundle" ]; then
-    curl -L -o eval_bundle.zip $EVAL_BUNDLE_URL
-    unzip -q eval_bundle.zip
-    rm eval_bundle.zip
-    mv eval_bundle $MYCHAT_BASE_DIR
-fi
+# EVAL_BUNDLE_URL=https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
+# if [ ! -d "$MYCHAT_BASE_DIR/eval_bundle" ]; then
+#     curl -L -o eval_bundle.zip $EVAL_BUNDLE_URL
+#     unzip -q eval_bundle.zip
+#     rm eval_bundle.zip
+#     mv eval_bundle $MYCHAT_BASE_DIR
+# fi
 
 # The d20 model is 561M parameters.
 # Chinchilla says #tokens = 20X #params, so we need 561e6 * 20 = 11.2B tokens.
