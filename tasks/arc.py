@@ -16,7 +16,7 @@ class ARC(Task):
 
     @property
     def eval_type(self):
-        return "categorial"
+        return "categorical"
 
     def num_examples(self):
         return len(self.ds)
