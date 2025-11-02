@@ -219,7 +219,7 @@ for step in range(num_iterations + 1):
         eval_steps = eval_tokens // (device_batch_size * max_seq_len * ddp_world_size)
         with autocast_ctx:
             val_bpb = evaluate_bpb(model, val_loader, eval_steps, token_bytes)
-        # print0(f"Step {step:05d} | Validation bpb: {val_bpb:.4f}")
+        print0(f"Step {step:05d} | Validation bpb: {val_bpb:.4f}")
         if val_bpb < min_val_bpb:
             min_val_bpb = val_bpb
         wandb_run.log(
@@ -240,7 +240,7 @@ for step in range(num_iterations + 1):
         with autocast_ctx:
             print(f"tokenizer type: {type(tokenizer)}")
             results = evaluate_model(orig_model, tokenizer, device, max_per_task=core_metric_max_per_task)
-        # print0(f"Step {step:05d} | CORE metric: {results['core_metric']:.4f}")
+        print0(f"Step {step:05d} | CORE metric: {results['core_metric']:.4f}")
         wandb_run.log(
             {
                 "step": step,
@@ -276,7 +276,6 @@ for step in range(num_iterations + 1):
     if master_process and last_step:
         output_dirname = model_tag if model_tag else f"d{depth}"  # e.g. d12
         checkpoint_dir = os.path.join(base_dir, "base_checkpoints", output_dirname)
-        print0(f"Saving final checkpoint to {checkpoint_dir} ...")
         save_checkpoint(
             checkpoint_dir,
             step,

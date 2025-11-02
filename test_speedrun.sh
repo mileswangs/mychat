@@ -41,17 +41,12 @@ source "$HOME/.cargo/env"
 # build the Rustbpe tokenizer
 uv run maturin develop --release --manifest-path rustbpe/Cargo.toml
 
-# Download the first ~2B characters of pretrain dataset
-# look at dev/repackage_data_reference.py for details on how the data was prepared
-# each data shard is ~250M char
-# so we download 2e9 / 250e6 = 8 data shards at this point
-# each shard is ~100MB of text(compressed), so this is about 800MB of on disk
-python -m mychat.dataset -n 8
-# Immediately also kick off downloading more shards in the background while tokenizer trains
-# See comment below for why 240 is the right number here
-python -m mychat.dataset -n 240 & DATASET_DOWNLOAD_PID=$!
-# Train the tokenizer with vocab size 2**16 = 65536 on ~2B characters of data
-python -m scripts.tok_train --max_chars=2000000000 
+# Download minimal data for testing (~1B characters, 4 shards)
+# Each shard is ~250M char, so 4 shards = ~1B characters
+# This is about 400MB of compressed text on disk
+python -m mychat.dataset -n 4
+# Train the tokenizer with vocab size 2**16 = 65536 on ~1B characters of data
+python -m scripts.tok_train --max_chars=1000000000 
 # evaluate the tokenizer (report compression ratio)
 python -m scripts.tok_eval
 
@@ -67,24 +62,29 @@ if [ ! -d "$MYCHAT_BASE_DIR/eval_bundle" ]; then
     mv eval_bundle $MYCHAT_BASE_DIR
 fi
 
-# The d20 model is 561M parameters.
-# Chinchilla says #tokens = 20X #params, so we need 561e6 * 20 = 11.2B tokens.
-# Assume our tokenizer is 4.8 chars/token, this is 11.2B * 4.8 ~= 54B chars.
-# At 250M chars/shard, this is 54B / 250M ~= 216 shards needed for pretraining.
-# Round up to 240 for safety. At ~100MB/shard, this downloads ~24GB of data to disk.
-# (The total number of shards available in the entire dataset is 1822.)
-echo "Waiting for dataset download to complete..."
-wait $DATASET_DOWNLOAD_PID
-
-pretrain the d20 model
-torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- --depth=20 --run=$WANDB_RUN
-# evaluate the model on a larger chunk of train/val data and draw some samples
-torchrun --standalone --nproc_per_node=8 -m scripts.base_loss
-# evaluate the model on CORE tasks
-torchrun --standalone --nproc_per_node=8 -m scripts.base_eval
+# Train a small d4 model for testing (instead of d20)
+# This is much faster and sufficient for verifying the pipeline works
+# Using 100 iterations instead of full training
+torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- \
+    --depth=4 \
+    --max_seq_len=1024 \
+    --device_batch_size=1 \
+    --total_batch_size=1024 \
+    --eval_every=50 \
+    --eval_tokens=4096 \
+    --core_metric_every=50 \
+    --core_metric_max_per_task=12 \
+    --sample_every=50 \
+    --num_iterations=100 \
+    --run=$WANDB_RUN
+# evaluate the model on a smaller chunk of train/val data
+torchrun --standalone --nproc_per_node=8 -m scripts.base_loss -- --device_batch_size=1 --split_tokens=4096
+# evaluate the model on CORE tasks (reduced problem set for testing)
+torchrun --standalone --nproc_per_node=8 -m scripts.base_eval -- --max-per-task=16
 
 # # ------------------------------------------------------------------------------------
-# # Midtrain(tech the model conversation special tokens, tool use, multiple during training (~162mb)
+# # Midtrain (teach the model conversation special tokens, tool use, multiple turns)
+# # Using reduced iterations for testing
 
 #download identify conversations to impart a personality to the model
 #see dev/gen_synthetic_data.py for details on how this data was prepared and to get a sense of how you can easily tune it
@@ -93,24 +93,39 @@ if [ ! -f "$MYCHAT_BASE_DIR/identity_conversations.jsonl" ]; then
     curl -L -o "$MYCHAT_BASE_DIR/identity_conversations.jsonl" https://karpathy-public.s3.us-west-2.amazonaws.com/identity_conversations.jsonl
 fi
 
-# run midtrain and eval the model
-torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- --run=$WANDB_RUN
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid
+# run midtrain with reduced iterations and eval the model
+torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- \
+    --max_seq_len=1024 \
+    --device_batch_size=1 \
+    --eval_every=50 \
+    --eval_tokens=4096 \
+    --total_batch_size=1024 \
+    --num_iterations=100 \
+    --run=$WANDB_RUN
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i mid --max-new-tokens=128 --max-problems=20
 
 # ------------------------------------------------------------------------------------
-# Supervised Fine-Tuning (SFT) (domain adaptation to each sequence all by itself per row)
+# Supervised Fine-Tuning (SFT) with reduced iterations for testing
 
-# train sft and re-eval right way (should see a small bump)
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- --run=$WANDB_RUN
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i sft
+# train sft with reduced iterations and re-eval
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_sft -- \
+    --device_batch_size=1 \
+    --target_examples_per_step=4 \
+    --num_iterations=100 \
+    --eval_steps=4 \
+    --eval_metrics_max_problems=16 \
+    --run=$WANDB_RUN
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i sft --max-new-tokens=128 --max-problems=20
 
 # chat with the model over CLI! Leave out the -p to chat interactively
 # python -m scripts.chat_cli -p "Why is the sky blue?"
 
 # ------------------------------------------------------------------------------------
-# Reinforcement learning, currently only on gsm8k
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- --run=$WANDB_RUN
-torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K
+# Reinforcement learning, currently only on gsm8k (with reduced iterations)
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_rl -- \
+    --num_iterations=50 \
+    --run=$WANDB_RUN
+torchrun --standalone --nproc_per_node=8 -m scripts.chat_eval -- -i rl -a GSM8K --max-problems=20
 
 # ------------------------------------------------------------------------------------
 # Generate the full report by putting together all the sections
