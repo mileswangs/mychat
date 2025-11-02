@@ -66,7 +66,7 @@ use_dummy_wandb = run == "dummy" or not master_process
 wandb_run = DummyWandb() if use_dummy_wandb else wandb.init(project="mychat-rl", name=run, config=user_config)
 
 # Init model and tokenizer
-model, tokenizer, meta = load_model(source, device, phase="train", dtype=dtype)
+model, tokenizer, meta = load_model(source, device, phase="train")
 engine = Engine(model, tokenizer)
 
 # -----------------------------------------------------------------------------
