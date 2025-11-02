@@ -104,13 +104,14 @@ class MMLU(Task):
         row = self.ds[index]
         question = row["question"]
         choices = row["choices"]
-        answer_string = row["answer"]
+        answer = row["answer"]  # index of the answer, e.g. 0,1,2,3 (for A,B,C,D)
         subject = row["subject"]
         # create and return conversation
         user_message = render_mc(question, self.letters, choices)
+        assistant_message = self.letters[answer]
         messages = [
             {"role": "user", "content": user_message},
-            {"role": "assistant", "content": answer_string},
+            {"role": "assistant", "content": assistant_message},
         ]
         conversation = {
             "messages": messages,
