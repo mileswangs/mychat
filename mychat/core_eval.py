@@ -142,7 +142,7 @@ def forward_model(model, input_ids):
     target_ids = torch.roll(input_ids, shifts=-1, dims=1)
     # Calculate cross entropy loss at all positions
     losses = torch.nn.functional.cross_entropy(
-        outputs.logits.view(batch_size * seq_len, -1),
+        outputs.view(batch_size * seq_len, -1),
         target_ids.view(batch_size * seq_len),
         reduction="none",
     ).view(batch_size, seq_len)
