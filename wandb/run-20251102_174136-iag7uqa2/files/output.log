@@ -1,0 +1,67 @@
+2025-11-02 17:41:38,388 - mychat.checkpoint_manager - [32m[1mINFO[0m - No model tag provided, guessing model tag: d4
+2025-11-02 17:41:38,389 - mychat.checkpoint_manager - [32m[1mINFO[0m - Loading model from /Users/wangshuo/.cache/mychat/chatsft_checkpoints/d4 with step 15
+2025-11-02 17:41:38,479 - mychat.checkpoint_manager - [32m[1mINFO[0m - Building model with config: {'sequence_len': 1024, 'vocab_size': 65536, 'n_layer': 4, 'n_head': 2, 'n_kv_head': 2, 'n_embd': 256}
+Calculated number of steps: 467
+Scaling the LR for the AdamW parameters ∝1/√(256/768) = 1.732051
+Total sequences per step: 256
+Calculated examples per rank: 16
+Traceback (most recent call last):
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/Users/wangshuo/Desktop/mychat/scripts/chat_rl.py", line 227, in <module>
+    records = list(records_iter)  # collect all records
+  File "/Users/wangshuo/Desktop/mychat/scripts/chat_rl.py", line 160, in run_gsm8k_eval
+    generated_token_sequences, masks = engine.generate_batch(
+  File "/Users/wangshuo/Desktop/mychat/mychat/engine.py", line 299, in generate_batch
+    for token_column, token_masks in self.generate(tokens, num_samples, **kwargs):
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 59, in generator_context
+    response = gen.send(request)
+  File "/Users/wangshuo/Desktop/mychat/mychat/engine.py", line 243, in generate
+    logits = self.model.forward(ids, kv_cache=kv_cache_decode)  # (B, T, vocab_size)
+  File "/Users/wangshuo/Desktop/mychat/mychat/gpt.py", line 257, in forward
+    x = block(x, cos_sin, kv_cache)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/mychat/gpt.py", line 139, in forward
+    x = x + self.attn(norm(x), cos_sin, kv_cache)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/mychat/gpt.py", line 101, in forward
+    y = F.scaled_dot_product_attention(q, k, v, is_causal=False, enable_gqa=enable_gqa)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Users/wangshuo/.local/share/uv/python/cpython-3.10.16-macos-aarch64-none/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/Users/wangshuo/Desktop/mychat/scripts/chat_rl.py", line 227, in <module>
+    records = list(records_iter)  # collect all records
+  File "/Users/wangshuo/Desktop/mychat/scripts/chat_rl.py", line 160, in run_gsm8k_eval
+    generated_token_sequences, masks = engine.generate_batch(
+  File "/Users/wangshuo/Desktop/mychat/mychat/engine.py", line 299, in generate_batch
+    for token_column, token_masks in self.generate(tokens, num_samples, **kwargs):
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 59, in generator_context
+    response = gen.send(request)
+  File "/Users/wangshuo/Desktop/mychat/mychat/engine.py", line 243, in generate
+    logits = self.model.forward(ids, kv_cache=kv_cache_decode)  # (B, T, vocab_size)
+  File "/Users/wangshuo/Desktop/mychat/mychat/gpt.py", line 257, in forward
+    x = block(x, cos_sin, kv_cache)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/mychat/gpt.py", line 139, in forward
+    x = x + self.attn(norm(x), cos_sin, kv_cache)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1775, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/.venv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1786, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/Users/wangshuo/Desktop/mychat/mychat/gpt.py", line 101, in forward
+    y = F.scaled_dot_product_attention(q, k, v, is_causal=False, enable_gqa=enable_gqa)
+KeyboardInterrupt

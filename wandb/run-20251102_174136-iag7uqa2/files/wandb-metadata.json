@@ -1,0 +1,38 @@
+{
+  "os":  "macOS-14.6.1-arm64-arm-64bit",
+  "python":  "CPython 3.10.16",
+  "startedAt":  "2025-11-02T09:41:36.653219Z",
+  "args":  [
+    "--run="
+  ],
+  "program":  "-m scripts.chat_rl",
+  "git":  {
+    "remote":  "git@github.com:mileswangs/mychat.git",
+    "commit":  "63fd4719ddabe31fa81b84f93970209342f6ec36"
+  },
+  "email":  "ws18022@outlook.com",
+  "root":  "/Users/wangshuo/Desktop/mychat",
+  "host":  "wangshuodeMacBook-Pro.local",
+  "executable":  "/Users/wangshuo/Desktop/mychat/.venv/bin/python",
+  "cpu_count":  8,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "494384795648",
+      "used":  "175432232960"
+    }
+  },
+  "memory":  {
+    "total":  "17179869184"
+  },
+  "apple":  {
+    "name":  "Apple M3",
+    "ecpuCores":  4,
+    "pcpuCores":  4,
+    "gpuCores":  10,
+    "memoryGb":  16,
+    "swapTotalBytes":  "7516192768",
+    "ramTotalBytes":  "17179869184"
+  },
+  "writerId":  "wwmlxdse8m0mzah0m5znqctkflvv0xjf"
+}
