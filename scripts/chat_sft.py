@@ -2,18 +2,18 @@
 # SFT Hyperparameters
 from contextlib import nullcontext
 import os
-from tkinter import ARC
 import torch
 import torch.distributed as dist
 import wandb
 from mychat.checkpoint_manager import load_model
 from mychat.common import DummyWandb, autodetect_device_type, compute_init, get_base_dir, print0
 from mychat.engine import Engine
-from script.chat_eval import run_chat_eval
+from scripts.chat_eval import run_chat_eval
 from tasks.common import TaskMixture
 from tasks.customjson import CustomJSON
 from tasks.gsm8k import GSM8K
 from tasks.smoltalk import SmolTalk
+from tasks.arc import ARC
 
 
 run = "dummy"  # wandb run name default ("dummy" is special - we won't log to wandb)
