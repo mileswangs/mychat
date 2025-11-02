@@ -48,7 +48,7 @@ def download_single_file(index: int):
     filename = index_to_filename(index)
     file_path = os.path.join(DATA_DIR, filename)
     if os.path.exists(file_path):
-        print(f"{file_path} already exists, skipping download.")
+        # print(f"{file_path} already exists, skipping download.")
         return
     url = f"{base_url}/{filename}"
     # print(f"Downloading {filename}")
