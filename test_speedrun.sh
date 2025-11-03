@@ -35,7 +35,7 @@ python -m mychat.report reset
 # ---------------------------------------------------------
 # Tokenizer
 
-if false; then
+if true; then
     echo "==> Building and training tokenizer..."
     # Install rust/cargo 
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -56,7 +56,7 @@ fi
 # ---------------------------------------------------------
 # Pretrain
 
-if false; then
+if true; then
     echo "==> Pretraining base model..."
     #download the eval bundle to evaluate Core metric when training
     EVAL_BUNDLE_URL=https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
@@ -75,7 +75,6 @@ if false; then
     # eval_tokens must be >= world_tokens (8192) to have at least 1 eval step
     torchrun --standalone --nproc_per_node=8 -m scripts.base_train -- \
         --depth=4 \
-        --max_seq_len=1024 \
         --device_batch_size=1 \
         --total_batch_size=8192 \
         --eval_every=50 \
@@ -96,7 +95,7 @@ fi
 # # Midtrain (teach the model conversation special tokens, tool use, multiple turns)
 # # Using reduced iterations for testing
 
-if false; then
+if true; then
     echo "==> Midtraining model..."
     #download identify conversations to impart a personality to the model
     #see dev/gen_synthetic_data.py for details on how this data was prepared and to get a sense of how you can easily tune it
@@ -109,7 +108,6 @@ if false; then
     # With 8 GPUs, batch_size=1, seq_len=1024: world_tokens = 8192
     # eval_tokens must be >= 8192
     torchrun --standalone --nproc_per_node=8 -m scripts.mid_train -- \
-        --max_seq_len=1024 \
         --device_batch_size=1 \
         --eval_every=50 \
         --eval_tokens=16384 \
@@ -122,7 +120,7 @@ fi
 # ------------------------------------------------------------------------------------
 # Supervised Fine-Tuning (SFT) with reduced iterations for testing
 
-if false; then
+if true; then
     echo "==> Running SFT..."
     # train sft with reduced iterations and re-eval
     # With 8 GPUs and device_batch_size=1: examples_per_step = 1 * 8 = 8
