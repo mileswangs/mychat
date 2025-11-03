@@ -35,7 +35,7 @@ python -m mychat.report reset
 # ---------------------------------------------------------
 # Tokenizer
 
-if true; then
+if false; then
     echo "==> Building and training tokenizer..."
     # Install rust/cargo 
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -56,7 +56,7 @@ fi
 # ---------------------------------------------------------
 # Pretrain
 
-if true; then
+if false; then
     echo "==> Pretraining base model..."
     #download the eval bundle to evaluate Core metric when training
     EVAL_BUNDLE_URL=https://karpathy-public.s3.us-west-2.amazonaws.com/eval_bundle.zip
@@ -96,7 +96,7 @@ fi
 # # Midtrain (teach the model conversation special tokens, tool use, multiple turns)
 # # Using reduced iterations for testing
 
-if true; then
+if false; then
     echo "==> Midtraining model..."
     #download identify conversations to impart a personality to the model
     #see dev/gen_synthetic_data.py for details on how this data was prepared and to get a sense of how you can easily tune it
@@ -122,7 +122,7 @@ fi
 # ------------------------------------------------------------------------------------
 # Supervised Fine-Tuning (SFT) with reduced iterations for testing
 
-if true; then
+if false; then
     echo "==> Running SFT..."
     # train sft with reduced iterations and re-eval
     # With 8 GPUs and device_batch_size=1: examples_per_step = 1 * 8 = 8
