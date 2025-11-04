@@ -81,6 +81,7 @@ print0(f"Calculated number of steps: {num_steps}")
 @torch.no_grad()
 def get_batch():
     assistant_end = tokenizer.encode_special("<|assistant_end|>")  # Get the single token ID for assistant_end
+    assert assistant_end < model.config.vocab_size, f"assistant_end ({assistant_end}) >= vocab_size ({model.config.vocab_size})"
     rank_indices = range(ddp_rank, len(train_task), ddp_world_size)  # each rank is responsible for different examples in the training data
     for example_idx in itertools.cycle(rank_indices):
         # First get the full conversation of both user and assistant messages
@@ -130,7 +131,7 @@ def get_batch():
         # Generate autoregressive inputs and targets to the Transformer
         inputs = ids[:, :-1]
         targets = ids[:, 1:].clone()  # clone to avoid in-place modification:
-        targets[mask_ids[:, 1:] == 0] = -100  # <-- inplace modification right here. -1 is the ignore index
+        targets[mask_ids[:, 1:] == 0] = -1  # <-- inplace modification right here. -1 is the ignore index
         rewards = torch.tensor(rewards, dtype=torch.float, device=device)
         # Calculate the advantages by simply subtracting the mean (instead of z-score (x-mu)/sigma)
         mu = rewards.mean()
