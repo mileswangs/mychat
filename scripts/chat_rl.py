@@ -98,6 +98,7 @@ def get_batch():
         num_sampling_steps = num_samples // device_batch_size  # go sequentially to prevent OOMs
         for sampling_step in range(num_sampling_steps):
             seed = hash((step, example_idx, sampling_step)) & 0x7FFFFFFF
+            print0(f"Generating sample {sampling_step + 1}/{num_sampling_steps} for example {example_idx} at step {step} with seed {seed}")
             with autocast_ctx:
                 generated_token_sequences_batch, mask_batch = engine.generate_batch(
                     tokens,
